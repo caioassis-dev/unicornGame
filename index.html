@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo do Unicórnio Mágico</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap');
+
+        body {
+            font-family: 'Comic Neue', cursive, sans-serif;
+            background-color: #fce4ec; /* Rosa bem clarinho */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+            color: #4a148c;
+        }
+
+        #game-container {
+            background-color: #ffffff;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 90%;
+            border: 5px solid #ff80ab;
+        }
+
+        #unicorn {
+            font-size: 80px;
+            animation: bounce 2s infinite;
+            margin-bottom: -10px;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-20px);}
+            60% {transform: translateY(-10px);}
+        }
+
+        #question-text {
+            font-size: 24px;
+            margin: 20px 0;
+            background-color: #e1bee7;
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        button {
+            font-family: 'Comic Neue', cursive, sans-serif;
+            font-size: 28px;
+            padding: 15px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-option {
+            background-color: #b3e5fc;
+            color: #01579b;
+            border: 3px solid #81d4fa;
+        }
+
+        .btn-option:hover {
+            background-color: #81d4fa;
+        }
+
+        #feedback {
+            font-size: 24px;
+            margin-top: 20px;
+            height: 30px;
+            font-weight: bold;
+        }
+
+        .correct { color: #4caf50; }
+        .wrong { color: #f44336; }
+
+        #end-screen {
+            display: none;
+        }
+
+        #progress {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="unicorn">🦄</div>
+        
+        <div id="quiz-screen">
+            <div id="question-text">Carregando pergunta...</div>
+            <div class="buttons">
+                <button class="btn-option" id="btn1" onclick="checkAnswer(0)"></button>
+                <button class="btn-option" id="btn2" onclick="checkAnswer(1)"></button>
+            </div>
+            <div id="feedback"></div>
+            <div id="progress"></div>
+        </div>
+
+        <div id="end-screen">
+            <h2>Ebaaaa! Você terminou! 🎉</h2>
+            <p>O Unicórnio está muito orgulhoso de você!</p>
+            <div style="font-size: 60px;">🌟🎈🎊</div>
+            <p>Volte amanhã para mais brincadeiras!</p>
+        </div>
+    </div>
+
+    <script>
+        // Banco de perguntas (Adicione quantas quiser aqui)
+        const allQuestions = [
+            { q: "Qual animal faz MIAU?", options: [{t: "🐱 Gatinho", c: true}, {t: "🐶 Cachorro", c: false}] },
+            { q: "Qual é a cor do Sol?", options: [{t: "🟨 Amarelo", c: true}, {t: "🟦 Azul", c: false}] },
+            { q: "Onde o peixinho mora?", options: [{t: "💧 Na água", c: true}, {t: "☁️ No céu", c: false}] },
+            { q: "Qual fruta é vermelha?", options: [{t: "🍎 Maçã", c: true}, {t: "🍌 Banana", c: false}] },
+            { q: "Quem faz MUUU?", options: [{t: "🐮 Vaquinha", c: true}, {t: "🐸 Sapo", c: false}] },
+            { q: "O que usamos para beber água?", options: [{t: "🥤 Copo", c: true}, {t: "👟 Sapato", c: false}] },
+            { q: "Qual bicho voa?", options: [{t: "🦋 Borboleta", c: true}, {t: "🐢 Tartaruga", c: false}] },
+            { q: "O que brilha à noite?", options: [{t: "⭐ Estrela", c: true}, {t: "🌳 Árvore", c: false}] },
+            { q: "Qual é macio para dormir?", options: [{t: "🛏️ Travesseiro", c: true}, {t: "🪨 Pedra", c: false}] },
+            { q: "Quantos dedinhos temos em uma mão?", options: [{t: "🖐️ Cinco", c: true}, {t: "✌️ Dois", c: false}] },
+            { q: "Qual animal tem o pescoço comprido?", options: [{t: "🦒 Girafa", c: true}, {t: "🐷 Porquinho", c: false}] },
+            { q: "O que a abelha faz?", options: [{t: "🍯 Mel", c: true}, {t: "🧀 Queijo", c: false}] },
+            { q: "Qual é a cor do céu de dia?", options: [{t: "🟦 Azul", c: true}, {t: "🟩 Verde", c: false}] },
+            { q: "Onde o passarinho faz o ninho?", options: [{t: "🌳 Na árvore", c: true}, {t: "🚗 No carro", c: false}] },
+            { q: "O que usamos na cabeça?", options: [{t: "🧢 Chapéu", c: true}, {t: "🧦 Meia", c: false}] }
+        ];
+
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+
+        function initGame() {
+            // Lógica para pegar perguntas diferentes baseadas no dia do ano
+            // Assim, todo dia as perguntas podem mudar se você tiver um banco grande.
+            // Por enquanto, como temos 15, usaremos essas 15.
+            
+            // Embaralha as perguntas para não ser sempre na mesma ordem
+            currentQuestions = allQuestions.sort(() => 0.5 - Math.random()).slice(0, 15);
+            
+            currentIndex = 0;
+            score = 0;
+            document.getElementById("end-screen").style.display = "none";
+            document.getElementById("quiz-screen").style.display = "block";
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const questionData = currentQuestions[currentIndex];
+            document.getElementById("question-text").innerText = questionData.q;
+            document.getElementById("feedback").innerText = "";
+
+            // Embaralha os botões para a resposta certa não ficar sempre no mesmo lugar
+            const shuffledOptions = [...questionData.options].sort(() => 0.5 - Math.random());
+            
+            const btn1 = document.getElementById("btn1");
+            const btn2 = document.getElementById("btn2");
+
+            btn1.innerText = shuffledOptions[0].t;
+            btn1.onclick = () => checkAnswer(shuffledOptions[0].c);
+
+            btn2.innerText = shuffledOptions[1].t;
+            btn2.onclick = () => checkAnswer(shuffledOptions[1].c);
+
+            document.getElementById("progress").innerText = `Pergunta ${currentIndex + 1} de ${currentQuestions.length}`;
+        }
+
+        function checkAnswer(isCorrect) {
+            const feedback = document.getElementById("feedback");
+            if (isCorrect) {
+                feedback.innerHTML = "<span class='correct'>✨ EBA! Muito bem! ✨</span>";
+                score++;
+                
+                // Vai para a próxima pergunta após 1.5 segundos
+                setTimeout(() => {
+                    currentIndex++;
+                    if (currentIndex < currentQuestions.length) {
+                        showQuestion();
+                    } else {
+                        endGame();
+                    }
+                }, 1500);
+
+            } else {
+                feedback.innerHTML = "<span class='wrong'>Ups! Tente o outro botão! 🦄</span>";
+            }
+        }
+
+        function endGame() {
+            document.getElementById("quiz-screen").style.display = "none";
+            document.getElementById("end-screen").style.display = "block";
+        }
+
+        // Inicia o jogo quando a página carrega
+        window.onload = initGame;
+    </script>
+</body>
+</html>
